@@ -1,82 +1,30 @@
-<!DOCTYPE html>
-<html lang="lv">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pierakstīšanās prototipēšanas laboratorijas tehnikas lietošanai</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        table { width: 80%; margin: auto; border-collapse: collapse; }
-        th, td { border: 1px solid gray; padding: 10px; text-align: center; }
-        .editable { cursor: text; }
-        button { margin: 10px; }
-    </style>
-</head>
-<body>
-    <h1>Pierakstīšanās prototipēšanas laboratorijas tehnikas lietošanai</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Uzdevums</th>
-                <th>Students</th>
-                <th>Datums</th>
-                <th>Piezīmes</th>
-            </tr>
-        </thead>
-        <tbody id="taskTable"></tbody>
-    </table>
-    <button onclick="addRow()">Pievienot ierakstu</button>
-    <button onclick="saveTable()">Saglabāt</button>
-    <button onclick="loadTable()">Ielādēt</button>
-    <button onclick="clearTable()">Notīrīt</button>
+<script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbzXEV_vGHBDA2IJaLBurCGZU0xkMmrL7igdk_wAMgCwcdJ0DVuHB6_8SSaJ6L07pLSZ/exec";
+    
+    function saveTable() {
+        const rows = [...taskTable.rows].map(row => ({
+            task: row.cells[0].innerText,
+            student: row.cells[1].innerText,
+            date: row.cells[2].querySelector("select").value,
+            notes: row.cells[3].innerText
+        }));
+        fetch(scriptURL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(rows)
+        })
+        .then(response => response.text())
+        .then(data => {
+            alert(data); // Show response from server
+        });
+    }
 
-    <script>
-        const scriptURL = "https://script.google.com/macros/s/AKfycbzXEV_vGHBDA2IJaLBurCGZU0xkMmrL7igdk_wAMgCwcdJ0DVuHB6_8SSaJ6L07pLSZ/exec";
-        const taskTable = document.getElementById("taskTable");
-        const workingHours = ["12:00", "13:00", "14:00", "15:00", "16:00"];
-
-        function addRow(task = "", student = "", date = "12:00", notes = "") {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td contenteditable="true">${task}</td>
-                <td contenteditable="true">${student}</td>
-                <td>
-                    <select>
-                        ${workingHours.map(time => `<option value="${time}" ${time === date ? "selected" : ""}>${time}</option>`).join("")}
-                    </select>
-                </td>
-                <td contenteditable="true">${notes}</td>
-            `;
-            taskTable.appendChild(tr);
-        }
-
-        function saveTable() {
-            const rows = [...taskTable.rows].map(row => ({
-                task: row.cells[0].innerText,
-                student: row.cells[1].innerText,
-                date: row.cells[2].querySelector("select").value,
-                notes: row.cells[3].innerText
-            }));
-            fetch(scriptURL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(rows)
-            }).then(response => response.text()).then(alert("Tabula saglabāta!"));
-        }
-
-        function loadTable() {
-            fetch(scriptURL).then(response => response.json()).then(data => {
-                taskTable.innerHTML = "";
-                data.forEach(row => addRow(row[0], row[1], row[2], row[3]));
-            });
-        }
-
-        function clearTable() {
+    function loadTable() {
+        fetch(scriptURL)
+        .then(response => response.json())
+        .then(data => {
             taskTable.innerHTML = "";
-            addRow();
-        }
-
-        loadTable();
-    </script>
-</body>
-</html>
+            data.slice(1).forEach(row => addRow(row[0], row[1], row[2], row[3])); // Skip header row
+        });
+    }
+</script>
