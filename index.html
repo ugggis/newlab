@@ -23,28 +23,15 @@
                 <th>Piezīmes</th>
             </tr>
         </thead>
-        <tbody id="taskTable">
-            <tr>
-                <td contenteditable="true">Paraugs</td>
-                <td contenteditable="true">Students</td>
-                <td>
-                    <select>
-                        <option value="12:00" selected>12:00</option>
-                        <option value="13:00">13:00</option>
-                        <option value="14:00">14:00</option>
-                        <option value="15:00">15:00</option>
-                        <option value="16:00">16:00</option>
-                    </select>
-                </td>
-                <td contenteditable="true">Piezīme</td>
-            </tr>
-        </tbody>
+        <tbody id="taskTable"></tbody>
     </table>
     <button onclick="addRow()">Pievienot ierakstu</button>
     <button onclick="saveTable()">Saglabāt</button>
+    <button onclick="loadTable()">Ielādēt</button>
     <button onclick="clearTable()">Notīrīt</button>
 
     <script>
+        const scriptURL = "https://script.google.com/macros/s/AKfycbzl6ig6t5EcaUx4RP0qxAH5ggQWdvvghmSN_7BEwIdG1ZdgSJX2T4xYwtn_TMeahisoTw/exec";
         const taskTable = document.getElementById("taskTable");
         const workingHours = ["12:00", "13:00", "14:00", "15:00", "16:00"];
 
@@ -70,15 +57,26 @@
                 date: row.cells[2].querySelector("select").value,
                 notes: row.cells[3].innerText
             }));
-            localStorage.setItem("taskData", JSON.stringify(rows));
-            alert("Tabula saglabāta lokāli!");
+            fetch(scriptURL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(rows)
+            }).then(response => response.text()).then(alert("Tabula saglabāta!"));
+        }
+
+        function loadTable() {
+            fetch(scriptURL).then(response => response.json()).then(data => {
+                taskTable.innerHTML = "";
+                data.forEach(row => addRow(row[0], row[1], row[2], row[3]));
+            });
         }
 
         function clearTable() {
-            localStorage.removeItem("taskData");
             taskTable.innerHTML = "";
-            addRow("Paraugs", "Students", "12:00", "Piezīme");
+            addRow();
         }
+
+        loadTable();
     </script>
 </body>
 </html>
